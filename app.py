@@ -16,6 +16,10 @@ except Exception as e:
 # Mediapipe for Hand Tracking
 import mediapipe as mp
 
+print("MediaPipe module:", mp)
+print("MediaPipe file:", getattr(mp, "__file__", "No file"))
+print("MediaPipe attributes:", dir(mp)[:20])
+
 app = Flask(__name__)
 
 # Initialize Haar Cascades for Face & Eye Detection
