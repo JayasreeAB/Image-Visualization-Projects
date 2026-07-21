@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Hub - AI Face Counter & Hand Brightness Control</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Screen Brightness Simulation Overlay -->
+    <div id="brightnessDimmerOverlay"></div>
+
+    <div class="app-container">
+        <!-- Top Glassmorphic Navigation Bar -->
+        <header class="navbar">
+            <div class="logo-group">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-eye-slash vision-pulse"></i>
+                </div>
+                <div>
+                    <h1>Vision Hub AI</h1>
+                    <p class="subtitle">OpenCV & MediaPipe Control Center</p>
+                </div>
+            </div>
+
+            <!-- Mode Switcher Tabs -->
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-mode="dual">
+                    <i class="fa-solid fa-layer-group"></i> Dual Vision
+                </button>
+                <button class="nav-tab" data-mode="face">
+                    <i class="fa-solid fa-user-gear"></i> Face Counter
+                </button>
+                <button class="nav-tab" data-mode="hand">
+                    <i class="fa-solid fa-hand"></i> Hand Brightness
+                </button>
+            </div>
+
+            <!-- Header Action Badges -->
+            <div class="header-actions">
+                <div class="status-badge" id="cameraStatusBadge">
+                    <span class="status-dot offline"></span>
+                    <span id="cameraStatusText">Camera Off</span>
+                </div>
+                <button id="toggleCameraBtn" class="btn btn-primary">
+                    <i class="fa-solid fa-video"></i> Start Camera
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content Grid -->
+        <main class="dashboard-grid">
+            <!-- Left Viewport Column -->
+            <section class="viewport-card glass-panel">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fa-solid fa-camera"></i>
+                        <h2>Live Processing Feed</h2>
+                    </div>
+                    <div class="viewport-controls">
+                        <select id="cameraSourceSelect" class="form-select">
+                            <option value="browser">Browser Webcam (Client)</option>
+                            <option value="server">Local Direct Camera (Server)</option>
+                        </select>
+                        <button id="snapshotBtn" class="btn btn-secondary btn-icon" title="Take Snapshot">
+                            <i class="fa-solid fa-camera-retro"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="video-container">
+                    <!-- Hidden video element capturing user webcam stream -->
+                    <video id="webcamVideo" autoplay playsinline muted style="display: none;"></video>
+
+                    <!-- Render Canvas showing annotated stream -->
+                    <canvas id="outputCanvas"></canvas>
+
+                    <!-- Server Stream Image (For Direct Camera Mode) -->
+                    <img id="serverStreamImg" src="" style="display: none;" alt="Server Stream">
+
+                    <!-- Loading / Placeholder Overlay -->
+                    <div id="videoPlaceholder" class="video-placeholder">
+                        <div class="placeholder-content">
+                            <i class="fa-solid fa-circle-play start-icon"></i>
+                            <h3>Camera Inactive</h3>
+                            <p>Click "Start Camera" to launch live computer vision analysis</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="active-mode-pill">
+                        <span class="pill-label">Active Mode:</span>
+                        <span id="activeModeDisplay" class="pill-value">Dual Mode (Faces + Hand Brightness)</span>
+                    </div>
+                    <div class="stream-stats">
+                        <span><i class="fa-solid fa-bolt"></i> <span id="fpsCounter">0.0</span> FPS</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Metrics & Controls Column -->
+            <aside class="metrics-column">
+                <!-- Metrics Summary Cards -->
+                <div class="metrics-grid">
+                    <!-- Card 1: Face Count -->
+                    <div class="metric-card glass-panel highlight-blue">
+                        <div class="metric-icon">
+                            <i class="fa-solid fa-users-viewfinder"></i>
+                        </div>
+                        <div class="metric-data">
+                            <span class="metric-label">Faces Counted</span>
+                            <span class="metric-value" id="metricFaceCount">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Brightness Level -->
+                    <div class="metric-card glass-panel highlight-amber">
+                        <div class="metric-icon">
+                            <i class="fa-solid fa-sun"></i>
+                        </div>
+                        <div class="metric-data">
+                            <span class="metric-label">Brightness</span>
+                            <span class="metric-value" id="metricBrightness">{{ initial_brightness }}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Gesture Pinch Distance -->
+                    <div class="metric-card glass-panel highlight-green">
+                        <div class="metric-icon">
+                            <i class="fa-solid fa-hand-holding-hand"></i>
+                        </div>
+                        <div class="metric-data">
+                            <span class="metric-label">Pinch Gap</span>
+                            <span class="metric-value" id="metricDistance">0 <small>px</small></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Controls Card -->
+                <div class="controls-card glass-panel">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-solid fa-sliders"></i>
+                            <h2>Control Center</h2>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="brightnessRange">
+                            <span><i class="fa-solid fa-lightbulb"></i> Manual Brightness Override</span>
+                            <span id="brightnessValText">{{ initial_brightness }}%</span>
+                        </label>
+                        <input type="range" id="brightnessRange" min="0" max="100" value="{{ initial_brightness }}" class="custom-slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="minNeighborsRange">
+                            <span><i class="fa-solid fa-filter"></i> Face Min Neighbors</span>
+                            <span id="minNeighborsVal">5</span>
+                        </label>
+                        <input type="range" id="minNeighborsRange" min="1" max="10" value="5" class="custom-slider">
+                    </div>
+
+                    <div class="control-group">
+                        <label for="scaleFactorRange">
+                            <span><i class="fa-solid fa-expand"></i> Face Scale Factor</span>
+                            <span id="scaleFactorVal">1.1</span>
+                        </label>
+                        <input type="range" id="scaleFactorRange" min="105" max="150" value="110" class="custom-slider">
+                    </div>
+
+                    <div class="info-box">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <p><strong>Gesture Instructions:</strong> Bring your thumb tip and index finger tip close to lower brightness. Spread them apart to increase brightness!</p>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Application JavaScript -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

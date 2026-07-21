@@ -1,0 +1,7 @@
+flask>=3.0.0
+gunicorn>=21.2.0
+opencv-contrib-python>=4.8.0
+mediapipe>=0.10.0
+screen-brightness-control>=0.20.0
+numpy>=1.24.0
+Pillow>=10.0.0
