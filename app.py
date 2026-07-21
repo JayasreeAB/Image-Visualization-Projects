@@ -14,12 +14,12 @@ except Exception as e:
     print("screen_brightness_control not available or failed to load:", e)
 
 # Mediapipe for Hand Tracking
-import mediapipe as mp
+# import mediapipe as mp
 
-print("MediaPipe module:", mp)
-print("MediaPipe file:", mp.__file__)
-print("MediaPipe version:", getattr(mp, "__version__", "Unknown"))
-print("Has solutions:", hasattr(mp, "solutions"))
+# print("MediaPipe module:", mp)
+# print("MediaPipe file:", mp.__file__)
+# print("MediaPipe version:", getattr(mp, "__version__", "Unknown"))
+# print("Has solutions:", hasattr(mp, "solutions"))
 
 app = Flask(__name__)
 
@@ -32,16 +32,16 @@ eye_cascade = cv2.CascadeClassifier(
 )
 
 # Initialize Mediapipe Hands
-from mediapipe.python.solutions import hands as mp_hands
-from mediapipe.python.solutions import drawing_utils as mp_draw
+# from mediapipe.python.solutions import hands as mp_hands
+# from mediapipe.python.solutions import drawing_utils as mp_draw
 
-hands = mp_hands.Hands(
-    static_image_mode=False,
-    model_complexity=1,
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.7,
-    max_num_hands=2
-)
+# hands = mp_hands.Hands(
+#     static_image_mode=False,
+#     model_complexity=1,
+#     min_detection_confidence=0.7,
+#     min_tracking_confidence=0.7,
+#     max_num_hands=2
+# )
 
 # Store server state
 current_system_brightness = 50
@@ -119,61 +119,61 @@ def process_frame(frame, mode='dual', min_neighbors=5, scale_factor=1.1, min_con
         cv2.putText(frame, badge_text, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
     # --- 2. HAND GESTURE BRIGHTNESS PIPELINE ---
-    if mode in ['hand', 'dual']:
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        process_res = hands.process(frame_rgb)
+    # if mode in ['hand', 'dual']:
+    #     frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    #     process_res = hands.process(frame_rgb)
 
-        landmark_list = []
-        if process_res.multi_hand_landmarks:
-            for hand_lm in process_res.multi_hand_landmarks:
-                for idx, lm in enumerate(hand_lm.landmark):
-                    cx, cy = int(lm.x * w), int(lm.y * h)
-                    landmark_list.append([idx, cx, cy])
+    #     landmark_list = []
+    #     if process_res.multi_hand_landmarks:
+    #         for hand_lm in process_res.multi_hand_landmarks:
+    #             for idx, lm in enumerate(hand_lm.landmark):
+    #                 cx, cy = int(lm.x * w), int(lm.y * h)
+    #                 landmark_list.append([idx, cx, cy])
                 
-                # Draw hand skeleton connections
-                mp_draw.draw_landmarks(
-                    frame, hand_lm, mp_hands.HAND_CONNECTIONS,
-                    mp_draw.DrawingSpec(color=(0, 215, 255), thickness=2, circle_radius=3),
-                    mp_draw.DrawingSpec(color=(255, 0, 128), thickness=2)
-                )
+    #             # Draw hand skeleton connections
+    #             mp_draw.draw_landmarks(
+    #                 frame, hand_lm, mp_hands.HAND_CONNECTIONS,
+    #                 mp_draw.DrawingSpec(color=(0, 215, 255), thickness=2, circle_radius=3),
+    #                 mp_draw.DrawingSpec(color=(255, 0, 128), thickness=2)
+    #             )
 
-        if len(landmark_list) >= 9:
-            # Thumb tip = ID 4, Index tip = ID 8
-            x1, y1 = landmark_list[4][1], landmark_list[4][2]
-            x2, y2 = landmark_list[8][1], landmark_list[8][2]
+    #     if len(landmark_list) >= 9:
+    #         # Thumb tip = ID 4, Index tip = ID 8
+    #         x1, y1 = landmark_list[4][1], landmark_list[4][2]
+    #         x2, y2 = landmark_list[8][1], landmark_list[8][2]
 
-            # Highlights on tips
-            cv2.circle(frame, (x1, y1), 9, (0, 255, 0), cv2.FILLED)
-            cv2.circle(frame, (x2, y2), 9, (0, 255, 0), cv2.FILLED)
-            cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
+    #         # Highlights on tips
+    #         cv2.circle(frame, (x1, y1), 9, (0, 255, 0), cv2.FILLED)
+    #         cv2.circle(frame, (x2, y2), 9, (0, 255, 0), cv2.FILLED)
+    #         cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 0), 3)
 
-            # Midpoint & Distance
-            mid_x, mid_y = (x1 + x2) // 2, (y1 + y2) // 2
-            gesture_distance = int(hypot(x2 - x1, y2 - y1))
+    #         # Midpoint & Distance
+    #         mid_x, mid_y = (x1 + x2) // 2, (y1 + y2) // 2
+    #         gesture_distance = int(hypot(x2 - x1, y2 - y1))
 
-            # Interpolate distance (15 - 200 px) to brightness percentage (0 - 100 %)
-            calculated_b = float(np.interp(gesture_distance, [20, 200], [0, 100]))
-            b_level = int(calculated_b)
+    #         # Interpolate distance (15 - 200 px) to brightness percentage (0 - 100 %)
+    #         calculated_b = float(np.interp(gesture_distance, [20, 200], [0, 100]))
+    #         b_level = int(calculated_b)
 
-            # Update system brightness
-            safe_set_brightness(b_level)
+    #         # Update system brightness
+    #         safe_set_brightness(b_level)
 
-            # Draw visual indicator at midpoint
-            cv2.circle(frame, (mid_x, mid_y), 7, (255, 255, 255), cv2.FILLED)
-            cv2.putText(
-                frame, f"{b_level}%", (mid_x + 10, mid_y),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2
-            )
+    #         # Draw visual indicator at midpoint
+    #         cv2.circle(frame, (mid_x, mid_y), 7, (255, 255, 255), cv2.FILLED)
+    #         cv2.putText(
+    #             frame, f"{b_level}%", (mid_x + 10, mid_y),
+    #             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2
+    #         )
 
-        # Draw Brightness Bar on Right Edge
-        b_val = b_level if b_level is not None else safe_get_brightness()
-        bar_height = int(np.interp(b_val, [0, 100], [350, 100]))
-        cv2.rectangle(frame, (w - 40, 100), (w - 15, 350), (60, 60, 60), 2)
-        cv2.rectangle(frame, (w - 40, bar_height), (w - 15, 350), (0, 255, 128), -1)
-        cv2.putText(
-            frame, f"{b_val}%", (w - 55, 380),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 128), 2
-        )
+    #     # Draw Brightness Bar on Right Edge
+    #     b_val = b_level if b_level is not None else safe_get_brightness()
+    #     bar_height = int(np.interp(b_val, [0, 100], [350, 100]))
+    #     cv2.rectangle(frame, (w - 40, 100), (w - 15, 350), (60, 60, 60), 2)
+    #     cv2.rectangle(frame, (w - 40, bar_height), (w - 15, 350), (0, 255, 128), -1)
+    #     cv2.putText(
+    #         frame, f"{b_val}%", (w - 55, 380),
+    #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 128), 2
+    #     )
 
     return frame, face_count, b_level, gesture_distance
 
@@ -193,7 +193,7 @@ def api_process_frame():
     try:
         data = request.get_json(force=True)
         image_data = data.get('image', '')
-        mode = data.get('mode', 'dual')
+        mode = 'face'
         min_neighbors = data.get('min_neighbors', 5)
         scale_factor = data.get('scale_factor', 1.1)
 
