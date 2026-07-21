@@ -32,7 +32,9 @@ eye_cascade = cv2.CascadeClassifier(
 )
 
 # Initialize Mediapipe Hands
-mp_hands = mp.solutions.hands
+from mediapipe.python.solutions import hands as mp_hands
+from mediapipe.python.solutions import drawing_utils as mp_draw
+
 hands = mp_hands.Hands(
     static_image_mode=False,
     model_complexity=1,
@@ -40,7 +42,6 @@ hands = mp_hands.Hands(
     min_tracking_confidence=0.7,
     max_num_hands=2
 )
-mp_draw = mp.solutions.drawing_utils
 
 # Store server state
 current_system_brightness = 50
