@@ -16,9 +16,10 @@ except Exception as e:
 # Mediapipe for Hand Tracking
 import mediapipe as mp
 
-print("MediaPipe module:", mp)
-print("MediaPipe file:", getattr(mp, "__file__", "No file"))
-print("MediaPipe attributes:", dir(mp)[:20])
+print("MediaPipe module file:", getattr(mp, "__file__", "No file"))
+print("MediaPipe version:", getattr(mp, "__version__", "No version"))
+print("Has solutions?", hasattr(mp, "solutions"))
+print("Attributes:", dir(mp))
 
 app = Flask(__name__)
 
